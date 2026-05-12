@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prism — Service Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #08080c;
+    --surface: #0f0f15;
+    --surface2: #14141c;
+    --border: rgba(255,255,255,0.07);
+    --border-hover: rgba(255,255,255,0.14);
+    --text: #f0eee8;
+    --muted: #888880;
+    --faint: #3a3a45;
+
+    --purple: #7f77dd;
+    --purple-dim: #3c3489;
+    --purple-glow: rgba(127,119,221,0.12);
+
+    --teal: #1d9e75;
+    --teal-dim: #085041;
+    --teal-glow: rgba(29,158,117,0.12);
+
+    --amber: #ef9f27;
+    --amber-dim: #633806;
+    --amber-glow: rgba(239,159,39,0.12);
+
+    --coral: #d85a30;
+    --coral-glow: rgba(216,90,48,0.12);
+
+    --blue: #378add;
+    --blue-glow: rgba(55,138,221,0.12);
+
+    --pink: #d4537e;
+    --pink-glow: rgba(212,83,126,0.12);
+
+    --mono: 'DM Mono', monospace;
+    --serif: 'Instrument Serif', serif;
+    --sans: 'Syne', sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(8,8,12,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 0.5px solid var(--border);
+    padding: 0 3rem;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    height: 56px;
+  }
+
+  .nav-logo {
+    font-family: var(--sans);
+    font-weight: 800;
+    font-size: 18px;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, var(--purple) 0%, var(--teal) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-right: auto;
+  }
+
+  nav a {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  nav a:hover { color: var(--text); }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 7rem 3rem 5rem;
+    max-width: 900px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  .hero-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--purple);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .hero-eyebrow::before {
+    content: '';
+    display: inline-block;
+    width: 20px;
+    height: 1px;
+    background: var(--purple);
+  }
+
+  .hero h1 {
+    font-family: var(--serif);
+    font-size: clamp(3rem, 7vw, 5.5rem);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    font-weight: 400;
+    margin-bottom: 1.5rem;
+  }
+
+  .hero h1 em {
+    font-style: italic;
+    color: var(--muted);
+  }
+
+  .hero-desc {
+    font-size: 16px;
+    color: var(--muted);
+    max-width: 520px;
+    line-height: 1.7;
+    margin-bottom: 3rem;
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 3rem;
+  }
+  .stat-num {
+    font-family: var(--mono);
+    font-size: 2rem;
+    font-weight: 500;
+    color: var(--text);
+    display: block;
+  }
+  .stat-label {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* ── DIVIDER ── */
+  .section-divider {
+    border: none;
+    border-top: 0.5px solid var(--border);
+    margin: 0;
+  }
+
+  /* ── SECTION ── */
+  .section {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 4rem 3rem;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    flex-shrink: 0;
+    padding-top: 2px;
+  }
+
+  .section-title {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text);
+  }
+
+  /* ── CARDS ── */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 0.5px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .card {
+    background: var(--surface);
+    padding: 1.5rem;
+    transition: background 0.2s;
+    position: relative;
+  }
+  .card:hover { background: var(--surface2); }
+
+  .card-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    font-size: 16px;
+  }
+
+  .card-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    margin-bottom: 0.4rem;
+  }
+
+  .card-desc {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 0.75rem;
+  }
+
+  .card-detail {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: 5px;
+    padding: 4px 8px;
+    display: inline-block;
+    word-break: break-all;
+  }
+
+  .badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 4px;
+    margin-bottom: 0.75rem;
+  }
+
+  /* color themes */
+  .theme-purple .card-icon { background: var(--purple-glow); color: var(--purple); }
+  .theme-purple .badge { background: var(--purple-glow); color: var(--purple); }
+  .theme-purple .card-title { color: #afa9ec; }
+
+  .theme-teal .card-icon { background: var(--teal-glow); color: var(--teal); }
+  .theme-teal .badge { background: var(--teal-glow); color: var(--teal); }
+  .theme-teal .card-title { color: #5dcaa5; }
+
+  .theme-amber .card-icon { background: var(--amber-glow); color: var(--amber); }
+  .theme-amber .badge { background: var(--amber-glow); color: var(--amber); }
+  .theme-amber .card-title { color: #fac775; }
+
+  .theme-coral .card-icon { background: var(--coral-glow); color: var(--coral); }
+  .theme-coral .badge { background: var(--coral-glow); color: var(--coral); }
+  .theme-coral .card-title { color: #f0997b; }
+
+  .theme-blue .card-icon { background: var(--blue-glow); color: var(--blue); }
+  .theme-blue .badge { background: var(--blue-glow); color: var(--blue); }
+  .theme-blue .card-title { color: #85b7eb; }
+
+  .theme-pink .card-icon { background: var(--pink-glow); color: var(--pink); }
+  .theme-pink .badge { background: var(--pink-glow); color: var(--pink); }
+  .theme-pink .card-title { color: #ed93b1; }
+
+  /* ── WIDE CARD (single row) ── */
+  .card-wide {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    transition: background 0.2s, border-color 0.2s;
+    margin-bottom: 8px;
+  }
+  .card-wide:last-child { margin-bottom: 0; }
+  .card-wide:hover { background: var(--surface2); border-color: var(--border-hover); }
+
+  .card-wide-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+
+  .card-wide-body { flex: 1; min-width: 0; }
+  .card-wide-title { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+  .card-wide-desc { font-size: 12px; color: var(--muted); }
+  .card-wide-meta {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--faint);
+    margin-top: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ── ARCH BLOCK ── */
+  .arch-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border: 0.5px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .arch-cell {
+    background: var(--surface);
+    padding: 1.5rem;
+  }
+  .arch-cell:hover { background: var(--surface2); }
+  .arch-cell-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+  }
+  .arch-cell-val {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text);
+    word-break: break-all;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 0.5px solid var(--border);
+    padding: 2rem 3rem;
+    max-width: 900px;
+    margin: 2rem auto 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .footer-logo {
+    font-family: var(--sans);
+    font-weight: 800;
+    font-size: 14px;
+    background: linear-gradient(135deg, var(--purple) 0%, var(--teal) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .footer-copy {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--faint);
+    letter-spacing: 0.08em;
+  }
+
+  /* ── SCROLL ANIMATION ── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 0.55s ease, transform 0.55s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: none;
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="nav-logo">PRISM</span>
+  <a href="#core">Infrastructure</a>
+  <a href="#aws">AWS</a>
+  <a href="#ads">Ad Platforms</a>
+  <a href="#ai">AI & Data</a>
+  <a href="#arch">Architecture</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero reveal">
+  <p class="hero-eyebrow">Service Architecture</p>
+  <h1>Prism — <em>integrated</em><br>services overview</h1>
+  <p class="hero-desc">A complete map of every external service, API, and infrastructure component powering the Prism platform.</p>
+  <div class="hero-stats">
+    <div>
+      <span class="stat-num">17</span>
+      <span class="stat-label">External services</span>
+    </div>
+    <div>
+      <span class="stat-num">6</span>
+      <span class="stat-label">Service categories</span>
+    </div>
+    <div>
+      <span class="stat-num">3</span>
+      <span class="stat-label">Ad platforms</span>
+    </div>
+  </div>
+</section>
+
+<hr class="section-divider">
+
+<!-- CORE INFRASTRUCTURE -->
+<section class="section reveal" id="core">
+  <div class="section-header">
+    <span class="section-label">01</span>
+    <span class="section-title">Core Infrastructure</span>
+  </div>
+  <div class="cards">
+    <div class="card theme-purple">
+      <div class="card-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+      </div>
+      <span class="badge">PostgreSQL</span>
+      <p class="card-title">Neon Database</p>
+      <p class="card-desc">Primary relational database for staging and production workloads via connection pooling.</p>
+      <span class="card-detail">ep-delicate-dust-adgraunr-pooler<br>.c-2.us-east-1.aws.neon.tech</span>
+    </div>
+    <div class="card theme-teal">
+      <div class="card-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+      </div>
+      <span class="badge">Redis / Cache</span>
+      <p class="card-title">Upstash Redis</p>
+      <p class="card-desc">Managed Redis over TLS for caching, session storage, and Celery broker.</p>
+      <span class="card-detail">arriving-jackal-24300.upstash.io</span>
+    </div>
+    <div class="card theme-amber">
+      <div class="card-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+      </div>
+      <span class="badge">Email / SMTP</span>
+      <p class="card-title">Gmail SMTP</p>
+      <p class="card-desc">Transactional email delivery through Gmail using Django's SMTP email backend.</p>
+      <span class="card-detail">smtp.gmail.com<br>django.core.mail.backends.smtp.EmailBackend</span>
+    </div>
+    <div class="card theme-pink">
+      <div class="card-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <span class="badge">Identity</span>
+      <p class="card-title">Auth0</p>
+      <p class="card-desc">Authentication and identity management for user sign-in and OAuth flows.</p>
+      <span class="card-detail">dev-ref1nkyj5ron62lv.us.auth0.com</span>
+    </div>
+  </div>
+</section>
+
+<hr class="section-divider">
+
+<!-- AWS SERVICES -->
+<section class="section reveal" id="aws">
+  <div class="section-header">
+    <span class="section-label">02</span>
+    <span class="section-title">AWS Services</span>
+  </div>
+  <div class="cards">
+    <div class="card theme-amber">
+      <div class="card-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      </div>
+      <span class="badge">S3 Storage</span>
+      <p class="card-title">S3 Bucket</p>
+      <p class="card-desc">Object storage for assets, media files, and static content used by the platform.</p>
+      <span class="card-detail">stellar_assets</span>
+    </div>
+    <div class="card theme-coral">
+      <div class="card-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      </div>
+      <span class="badge">SQS / SNS</span>
+      <p class="card-title">Message Queue</p>
+      <p class="card-desc">Asynchronous messaging for report generation and event-driven tasks between services.</p>
+      <span class="card-detail">sp-sns-report-get-api<br>sqs.us-east-1.amazonaws.com/866676563571</span>
+    </div>
+    <div class="card theme-blue">
+      <div class="card-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+      </div>
+      <span class="badge">SP-API</span>
+      <p class="card-title">Amazon Seller Partner API</p>
+      <p class="card-desc">Integration with Amazon's Selling Partner API using LWA app credentials and OAuth.</p>
+      <span class="card-detail">AMAZON_CLIENT_ID<br>AMAZON_CLIENT_SECRET<br>LWA App + Refresh Token</span>
+    </div>
+  </div>
+</section>
+
+<hr class="section-divider">
+
+<!-- AD PLATFORMS -->
+<section class="section reveal" id="ads">
+  <div class="section-header">
+    <span class="section-label">03</span>
+    <span class="section-title">Ad Platforms</span>
+  </div>
+  <div class="cards">
+    <div class="card theme-blue">
+      <div class="card-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+      </div>
+      <span class="badge">Google Ads</span>
+      <p class="card-title">Google Ads API</p>
+      <p class="card-desc">Campaign management and reporting via Google Ads API with developer token access.</p>
+      <span class="card-detail">GOOGLE_ADS_CLIENT_ID<br>GOOGLE_ADS_DEVELOPER_TOKEN</span>
+    </div>
+    <div class="card theme-blue">
+      <div class="card-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+      </div>
+      <span class="badge">Meta / Facebook</span>
+      <p class="card-title">Meta Ads API</p>
+      <p class="card-desc">Facebook and Instagram advertising integration using Meta's Marketing API and access tokens.</p>
+      <span class="card-detail">META_APP_ID<br>META_APP_SECRET<br>META_ACCESS_TOKEN</span>
+    </div>
+    <div class="card theme-coral">
+      <div class="card-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+      </div>
+      <span class="badge">TikTok</span>
+      <p class="card-title">TikTok for Business</p>
+      <p class="card-desc">TikTok Ads integration for campaign performance and audience data access via OAuth.</p>
+      <span class="card-detail">TIKTOK_CLIENT_ID<br>TIKTOK_CLIENT_SECRET</span>
+    </div>
+  </div>
+</section>
+
+<hr class="section-divider">
+
+<!-- DATA & AI -->
+<section class="section reveal" id="ai">
+  <div class="section-header">
+    <span class="section-label">04</span>
+    <span class="section-title">AI, Data & Integrations</span>
+  </div>
+  <div class="cards">
+    <div class="card theme-purple">
+      <div class="card-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/></svg>
+      </div>
+      <span class="badge">LLM</span>
+      <p class="card-title">Anthropic Claude</p>
+      <p class="card-desc">AI capabilities and LLM-powered features using Anthropic's API for intelligent automation.</p>
+      <span class="card-detail">ANTHROPIC_API_KEY</span>
+    </div>
+    <div class="card theme-teal">
+      <div class="card-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      </div>
+      <span class="badge">ETL / Sync</span>
+      <p class="card-title">Airbyte</p>
+      <p class="card-desc">Data pipeline and ETL synchronization through Airbyte's self-hosted API for data integration.</p>
+      <span class="card-detail">http://localhost:8080/api/public/v1</span>
+    </div>
+    <div class="card theme-blue">
+      <div class="card-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      </div>
+      <span class="badge">CMS</span>
+      <p class="card-title">Webflow</p>
+      <p class="card-desc">Content management and site publishing via Webflow's API with workspace and site tokens.</p>
+      <span class="card-detail">WEBFLOW_CLIENT_ID<br>WEBFLOW_WORKSPACE_ACCESS_TOKEN<br>WEBFLOW_SITE_ACCESS_TOKEN</span>
+    </div>
+  </div>
+</section>
+
+<hr class="section-divider">
+
+<!-- APP ARCHITECTURE -->
+<section class="section reveal" id="arch">
+  <div class="section-header">
+    <span class="section-label">05</span>
+    <span class="section-title">App Architecture</span>
+  </div>
+  <div class="arch-grid">
+    <div class="arch-cell">
+      <p class="arch-cell-label">Task Queue</p>
+      <p class="arch-cell-val">Celery</p>
+    </div>
+    <div class="arch-cell">
+      <p class="arch-cell-label">Celery Broker</p>
+      <p class="arch-cell-val">redis://localhost:6379/0</p>
+    </div>
+    <div class="arch-cell">
+      <p class="arch-cell-label">Backend Framework</p>
+      <p class="arch-cell-val">Django / Python</p>
+    </div>
+    <div class="arch-cell">
+      <p class="arch-cell-label">Email Backend</p>
+      <p class="arch-cell-val">django.core.mail.backends.smtp.EmailBackend</p>
+    </div>
+    <div class="arch-cell">
+      <p class="arch-cell-label">Frontend URL</p>
+      <p class="arch-cell-val">http://localhost:5173</p>
+    </div>
+    <div class="arch-cell">
+      <p class="arch-cell-label">Agent URL</p>
+      <p class="arch-cell-val">http://localhost:8000 (Pixis Agent)</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span class="footer-logo">PRISM</span>
+  <span class="footer-copy">SERVICE ARCHITECTURE REFERENCE</span>
+</footer>
+
+<script>
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+  }, { threshold: 0.08 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
