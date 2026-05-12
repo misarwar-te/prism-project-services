@@ -1,0 +1,1430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stellar Backend — DevOps Deployment Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c10;
+    --bg2: #111318;
+    --bg3: #181c24;
+    --border: rgba(255,255,255,0.07);
+    --border-bright: rgba(255,255,255,0.14);
+    --text: #e8eaf0;
+    --text-muted: #7a8299;
+    --text-dim: #4a5270;
+    --accent: #4af4a0;
+    --accent2: #3d8cff;
+    --accent3: #ff6b6b;
+    --accent4: #f5a623;
+    --mono: 'Space Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+    --display: 'Syne', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    background: rgba(10,12,16,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 0.5px solid var(--border);
+    padding: 0 3rem;
+    height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .nav-logo {
+    font-family: var(--display);
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .nav-logo .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 12px var(--accent);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 2rem;
+    list-style: none;
+  }
+
+  .nav-links a {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    text-decoration: none;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--accent); }
+
+  .nav-badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent);
+    background: rgba(74,244,160,0.08);
+    border: 0.5px solid rgba(74,244,160,0.25);
+    padding: 3px 10px;
+    border-radius: 100px;
+    letter-spacing: 0.05em;
+  }
+
+  /* HERO */
+  .hero {
+    padding: 130px 3rem 80px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -100px; left: -100px;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(74,244,160,0.04) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero::after {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(61,140,255,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .hero-tag::before {
+    content: '';
+    display: inline-block;
+    width: 32px; height: 1px;
+    background: var(--accent);
+  }
+
+  h1 {
+    font-family: var(--display);
+    font-size: clamp(48px, 6vw, 88px);
+    font-weight: 800;
+    line-height: 1.0;
+    letter-spacing: -0.03em;
+    margin-bottom: 24px;
+    color: #fff;
+  }
+
+  h1 em {
+    font-style: normal;
+    color: var(--accent);
+  }
+
+  .hero-sub {
+    font-size: 17px;
+    color: var(--text-muted);
+    max-width: 560px;
+    line-height: 1.7;
+    margin-bottom: 40px;
+  }
+
+  .hero-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 48px;
+  }
+
+  .badge {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 5px 14px;
+    border-radius: 100px;
+    letter-spacing: 0.04em;
+    border: 0.5px solid;
+  }
+
+  .badge-green { color: var(--accent); border-color: rgba(74,244,160,0.3); background: rgba(74,244,160,0.06); }
+  .badge-blue { color: var(--accent2); border-color: rgba(61,140,255,0.3); background: rgba(61,140,255,0.06); }
+  .badge-red { color: var(--accent3); border-color: rgba(255,107,107,0.3); background: rgba(255,107,107,0.06); }
+  .badge-amber { color: var(--accent4); border-color: rgba(245,166,35,0.3); background: rgba(245,166,35,0.06); }
+  .badge-gray { color: var(--text-muted); border-color: var(--border-bright); background: rgba(255,255,255,0.03); }
+
+  .hero-meta {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.06em;
+    border-top: 0.5px solid var(--border);
+    padding-top: 24px;
+  }
+
+  /* SECTIONS */
+  main { max-width: 1100px; margin: 0 auto; padding: 0 3rem 6rem; }
+
+  .section { margin-bottom: 80px; }
+
+  .section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 32px;
+    padding-bottom: 12px;
+    border-bottom: 0.5px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  h2 {
+    font-family: var(--display);
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #fff;
+    margin-bottom: 24px;
+    line-height: 1.2;
+  }
+
+  h3 {
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 8px;
+    letter-spacing: 0.02em;
+  }
+
+  /* ARCH DIAGRAM */
+  .arch-diagram {
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: 16px;
+    padding: 40px;
+    margin-bottom: 24px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.9;
+    overflow-x: auto;
+  }
+
+  .arch-diagram pre {
+    color: var(--text-muted);
+    white-space: pre;
+  }
+
+  .arch-diagram .hl { color: var(--accent); }
+  .arch-diagram .hl2 { color: var(--accent2); }
+  .arch-diagram .hl3 { color: var(--accent4); }
+
+  /* TECH STACK TABLE */
+  .stack-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+  }
+
+  .stack-card {
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .stack-card:hover {
+    border-color: var(--border-bright);
+    transform: translateY(-2px);
+  }
+
+  .stack-card .component {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+
+  .stack-card .tech-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+
+  .stack-card .tech-ver {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+  }
+
+  /* ENV BLOCKS */
+  .env-group { margin-bottom: 32px; }
+
+  .env-group-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    margin-bottom: 12px;
+    padding: 6px 0;
+    border-bottom: 0.5px solid rgba(61,140,255,0.2);
+  }
+
+  .code-block {
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .code-block-header {
+    background: var(--bg3);
+    border-bottom: 0.5px solid var(--border);
+    padding: 10px 20px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .code-block-header .dots span {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-right: 4px;
+  }
+
+  .dot-r { background: #ff5f57; }
+  .dot-y { background: #febc2e; }
+  .dot-g { background: #28c840; }
+
+  .code-block pre {
+    padding: 20px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.8;
+    overflow-x: auto;
+    color: var(--text-muted);
+  }
+
+  .code-block .k { color: var(--text-dim); }
+  .code-block .v { color: var(--accent); }
+  .code-block .c { color: var(--text-dim); font-style: italic; }
+  .code-block .cmd { color: var(--accent2); }
+  .code-block .flag { color: var(--accent4); }
+
+  /* DEPLOY OPTIONS */
+  .deploy-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  @media (max-width: 720px) { .deploy-grid { grid-template-columns: 1fr; } }
+
+  .deploy-card {
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: 14px;
+    padding: 28px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .deploy-card:hover { border-color: var(--border-bright); }
+
+  .deploy-card.featured {
+    border-color: rgba(74,244,160,0.3);
+    background: rgba(74,244,160,0.03);
+  }
+
+  .deploy-card .rec-badge {
+    position: absolute;
+    top: 16px; right: 16px;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: rgba(74,244,160,0.1);
+    border: 0.5px solid rgba(74,244,160,0.3);
+    padding: 3px 8px;
+    border-radius: 100px;
+  }
+
+  .deploy-card .option-num {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+    letter-spacing: 0.1em;
+  }
+
+  .deploy-card .option-title {
+    font-family: var(--display);
+    font-size: 18px;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 12px;
+    letter-spacing: -0.01em;
+  }
+
+  .deploy-card .option-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-bottom: 20px;
+  }
+
+  .pros-cons { display: flex; flex-direction: column; gap: 6px; }
+
+  .pros-cons .item {
+    font-size: 12px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .pros-cons .item .icon {
+    font-family: var(--mono);
+    font-size: 11px;
+    margin-top: 1px;
+    flex-shrink: 0;
+  }
+
+  .pro .icon { color: var(--accent); }
+  .con .icon { color: var(--accent3); }
+  .pro { color: var(--text-muted); }
+  .con { color: var(--text-muted); }
+
+  /* CHECKLIST */
+  .checklist {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .check-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 16px 24px;
+    border-bottom: 0.5px solid var(--border);
+    transition: background 0.15s;
+    cursor: pointer;
+  }
+
+  .check-item:last-child { border-bottom: none; }
+  .check-item:hover { background: rgba(255,255,255,0.02); }
+
+  .check-box {
+    width: 18px; height: 18px;
+    border: 1.5px solid var(--border-bright);
+    border-radius: 4px;
+    flex-shrink: 0;
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+
+  .check-item.done .check-box {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .check-item.done .check-box::after {
+    content: '✓';
+    font-size: 11px;
+    color: #0a0c10;
+    font-weight: 700;
+  }
+
+  .check-item.done .check-text { color: var(--text-dim); text-decoration: line-through; }
+  .check-text { font-size: 14px; color: var(--text); }
+
+  /* INFRA CARDS */
+  .infra-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  @media (max-width: 680px) { .infra-grid { grid-template-columns: 1fr; } }
+
+  .infra-card {
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: 14px;
+    padding: 28px;
+    transition: border-color 0.2s;
+  }
+
+  .infra-card:hover { border-color: var(--border-bright); }
+
+  .infra-icon {
+    font-size: 22px;
+    margin-bottom: 16px;
+    display: block;
+  }
+
+  .infra-card h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+
+  .infra-card p {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.65;
+    margin-bottom: 16px;
+  }
+
+  .infra-detail {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .infra-detail span { display: flex; align-items: center; gap: 8px; }
+  .infra-detail .k { color: var(--text-dim); }
+  .infra-detail .v { color: var(--accent2); }
+
+  /* SCALING PHASES */
+  .phases { display: flex; gap: 0; position: relative; }
+
+  .phases::before {
+    content: '';
+    position: absolute;
+    top: 28px; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, var(--accent) 0%, var(--accent2) 50%, var(--accent4) 100%);
+    opacity: 0.3;
+  }
+
+  .phase {
+    flex: 1;
+    padding-top: 56px;
+    padding-right: 24px;
+    position: relative;
+  }
+
+  .phase-dot {
+    position: absolute;
+    top: 20px; left: 0;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    border: 2px solid;
+    background: var(--bg);
+  }
+
+  .phase:nth-child(1) .phase-dot { border-color: var(--accent); }
+  .phase:nth-child(2) .phase-dot { border-color: var(--accent2); }
+  .phase:nth-child(3) .phase-dot { border-color: var(--accent4); }
+
+  .phase-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .phase:nth-child(1) .phase-label { color: var(--accent); }
+  .phase:nth-child(2) .phase-label { color: var(--accent2); }
+  .phase:nth-child(3) .phase-label { color: var(--accent4); }
+
+  .phase h3 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 10px;
+  }
+
+  .phase ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .phase ul li {
+    font-size: 12px;
+    color: var(--text-muted);
+    padding-left: 14px;
+    position: relative;
+  }
+
+  .phase ul li::before {
+    content: '—';
+    position: absolute;
+    left: 0;
+    color: var(--text-dim);
+    font-size: 10px;
+  }
+
+  /* APPS TABLE */
+  .apps-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--bg2);
+    border-radius: 14px;
+    overflow: hidden;
+    border: 0.5px solid var(--border);
+  }
+
+  .apps-table th {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    padding: 14px 20px;
+    text-align: left;
+    background: var(--bg3);
+    border-bottom: 0.5px solid var(--border);
+    font-weight: 400;
+  }
+
+  .apps-table td {
+    padding: 14px 20px;
+    border-bottom: 0.5px solid var(--border);
+    font-size: 13px;
+  }
+
+  .apps-table tr:last-child td { border-bottom: none; }
+  .apps-table tr:hover td { background: rgba(255,255,255,0.01); }
+
+  .app-name {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent2);
+  }
+
+  .app-purpose { color: var(--text-muted); }
+
+  /* MONITORING */
+  .monitor-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+  }
+
+  .monitor-card {
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+
+  .monitor-card .tool-category {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+  }
+
+  .monitor-card .tools {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .monitor-card .tool-item {
+    font-size: 13px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .monitor-card .tool-item::before {
+    content: '';
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+
+  /* SECURITY */
+  .security-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .sec-item {
+    display: flex;
+    gap: 20px;
+    padding: 20px 24px;
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    align-items: flex-start;
+  }
+
+  .sec-item .sec-num {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--border-bright);
+    flex-shrink: 0;
+    line-height: 1;
+    margin-top: 2px;
+  }
+
+  .sec-item .sec-content h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 6px;
+  }
+
+  .sec-item .sec-content p {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  /* FOOTER */
+  footer {
+    background: var(--bg2);
+    border-top: 0.5px solid var(--border);
+    padding: 32px 3rem;
+    margin-top: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: gap;
+    gap: 16px;
+  }
+
+  footer .footer-logo {
+    font-family: var(--display);
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--text);
+  }
+
+  footer .footer-meta {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.06em;
+  }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 4px; }
+
+  /* STARTUP COMMANDS */
+  .startup-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border: 0.5px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .startup-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    border-bottom: 0.5px solid var(--border);
+  }
+
+  .startup-step:last-child { border-bottom: none; }
+
+  .step-num-col {
+    background: var(--bg3);
+    border-right: 0.5px solid var(--border);
+    padding: 20px 20px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-dim);
+    min-width: 52px;
+    text-align: center;
+    flex-shrink: 0;
+    line-height: 1.8;
+  }
+
+  .step-content-col {
+    flex: 1;
+    padding: 18px 24px;
+    background: var(--bg2);
+  }
+
+  .step-content-col .step-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+  .step-content-col code {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    display: block;
+    background: rgba(74,244,160,0.05);
+    border: 0.5px solid rgba(74,244,160,0.15);
+    padding: 8px 14px;
+    border-radius: 8px;
+    overflow-x: auto;
+    white-space: pre;
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">
+    <span class="dot"></span>
+    Stellar Backend
+  </div>
+  <ul class="nav-links">
+    <li><a href="#architecture">Architecture</a></li>
+    <li><a href="#stack">Stack</a></li>
+    <li><a href="#deploy">Deploy</a></li>
+    <li><a href="#env">Config</a></li>
+    <li><a href="#checklist">Checklist</a></li>
+    <li><a href="#security">Security</a></li>
+  </ul>
+  <span class="nav-badge">v2026-05-12</span>
+</nav>
+
+<!-- HERO -->
+<header style="max-width: 1100px; margin: 0 auto;">
+  <div class="hero">
+    <div class="hero-tag">DevOps Deployment Guide</div>
+    <h1>Deploy.<br><em>Scale.</em><br>Automate.</h1>
+    <p class="hero-sub">Stellar Backend is a Django REST API powering multi-platform marketing automation across Amazon, Google, Meta, and TikTok Ads.</p>
+    <div class="hero-badges">
+      <span class="badge badge-green">Django 4.2.7</span>
+      <span class="badge badge-blue">Python 3.11</span>
+      <span class="badge badge-amber">Celery 5.6.0</span>
+      <span class="badge badge-red">PostgreSQL 12+</span>
+      <span class="badge badge-gray">Docker 20.10+</span>
+      <span class="badge badge-blue">JWT Auth</span>
+      <span class="badge badge-green">AWS SQS / Redis</span>
+    </div>
+    <p class="hero-meta">Last updated: 2026-05-12 &nbsp;·&nbsp; Django REST Framework 3.14.0 &nbsp;·&nbsp; Gunicorn Production Server</p>
+  </div>
+</header>
+
+<main>
+
+  <!-- ARCHITECTURE -->
+  <section class="section" id="architecture">
+    <div class="section-label">
+      <span>01 — Architecture</span>
+      <span>System Design</span>
+    </div>
+    <h2>System Architecture</h2>
+    <div class="arch-diagram">
+      <pre><span class="hl">┌─────────────────────────────────────────────────────────────┐</span>
+<span class="hl">│                  Frontend SPA (port 5173)                   │</span>
+<span class="hl">└──────────────────────┬──────────────────────────────────────┘</span>
+                       │ HTTP / REST API
+                       ▼
+<span class="hl2">┌─────────────────────────────────────────────────────────────┐</span>
+<span class="hl2">│              Django REST API  (port 8000)                   │</span>
+<span class="hl2">│   accounts · strategies · assistant · google · meta        │</span>
+<span class="hl2">│   tiktok · google_sheets · users · emails                  │</span>
+<span class="hl2">└───┬──────────────────────────────────────────────────────┬──┘</span>
+    │ Queries / Writes                  │ Background Jobs
+    ▼                                    ▼
+<span class="hl3">┌─────────────────────┐         ┌──────────────────────────┐</span>
+<span class="hl3">│   PostgreSQL DB     │         │  Celery Worker(s)        │</span>
+<span class="hl3">│   (port 5432)       │         │  + Celery Beat scheduler │</span>
+<span class="hl3">└─────────────────────┘         └──────┬───────────────────┘</span>
+                                       │
+                                       ▼
+                              <span class="hl">┌──────────────────────┐</span>
+                              <span class="hl">│  AWS SQS  or  Redis  │</span>
+                              <span class="hl">│  (Message Broker)    │</span>
+                              <span class="hl">└──────────────────────┘</span></pre>
+    </div>
+    <div class="infra-grid">
+      <div class="infra-card">
+        <span class="infra-icon">🗄️</span>
+        <h3>PostgreSQL Database</h3>
+        <p>Stores users, accounts, campaigns, and configurations. Can be local or cloud-hosted on AWS RDS or Neon.</p>
+        <div class="infra-detail">
+          <span><span class="k">port</span><span class="v">5432</span></span>
+          <span><span class="k">min-ram</span><span class="v">2GB</span></span>
+          <span><span class="k">min-storage</span><span class="v">20GB</span></span>
+          <span><span class="k">ssl</span><span class="v">required in production</span></span>
+        </div>
+      </div>
+      <div class="infra-card">
+        <span class="infra-icon">📬</span>
+        <h3>Message Broker</h3>
+        <p>Choose AWS SQS (recommended for AWS) or Redis for simpler/on-premise setups. Handles async task queuing.</p>
+        <div class="infra-detail">
+          <span><span class="k">sqs</span><span class="v">fully managed, auto-scales</span></span>
+          <span><span class="k">redis-port</span><span class="v">6379</span></span>
+          <span><span class="k">queues</span><span class="v">3 named queues</span></span>
+        </div>
+      </div>
+      <div class="infra-card">
+        <span class="infra-icon">⚙️</span>
+        <h3>Celery Workers</h3>
+        <p>Execute long-running tasks: campaign updates, data syncs, automation workflows across ad platforms.</p>
+        <div class="infra-detail">
+          <span><span class="k">queue-1</span><span class="v">stellar-automation-workflow</span></span>
+          <span><span class="k">queue-2</span><span class="v">stellar-strategy-scheduler</span></span>
+          <span><span class="k">queue-3</span><span class="v">stellar-dashboard-actions</span></span>
+        </div>
+      </div>
+      <div class="infra-card">
+        <span class="infra-icon">🕐</span>
+        <h3>Celery Beat</h3>
+        <p>Triggers periodic and scheduled tasks. Recurring automations, data syncs, scheduled campaigns.</p>
+        <div class="infra-detail">
+          <span><span class="k">instances</span><span class="v">ONE only in production</span></span>
+          <span><span class="k">reason</span><span class="v">prevents duplicate scheduling</span></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TECH STACK -->
+  <section class="section" id="stack">
+    <div class="section-label">
+      <span>02 — Tech Stack</span>
+      <span>Versions & Technologies</span>
+    </div>
+    <h2>Technology Stack</h2>
+    <div class="stack-grid">
+      <div class="stack-card">
+        <div class="component">Language</div>
+        <div class="tech-name">Python</div>
+        <div class="tech-ver">3.11</div>
+      </div>
+      <div class="stack-card">
+        <div class="component">Framework</div>
+        <div class="tech-name">Django</div>
+        <div class="tech-ver">4.2.7</div>
+      </div>
+      <div class="stack-card">
+        <div class="component">REST API</div>
+        <div class="tech-name">DRF</div>
+        <div class="tech-ver">3.14.0</div>
+      </div>
+      <div class="stack-card">
+        <div class="component">Auth</div>
+        <div class="tech-name">JWT simplejwt</div>
+        <div class="tech-ver">5.3.1</div>
+      </div>
+      <div class="stack-card">
+        <div class="component">Task Queue</div>
+        <div class="tech-name">Celery</div>
+        <div class="tech-ver">5.6.0</div>
+      </div>
+      <div class="stack-card">
+        <div class="component">Database</div>
+        <div class="tech-name">PostgreSQL</div>
+        <div class="tech-ver">12+</div>
+      </div>
+      <div class="stack-card">
+        <div class="component">API Docs</div>
+        <div class="tech-name">drf-spectacular</div>
+        <div class="tech-ver">0.29.0</div>
+      </div>
+      <div class="stack-card">
+        <div class="component">Server</div>
+        <div class="tech-name">Gunicorn</div>
+        <div class="tech-ver">latest</div>
+      </div>
+      <div class="stack-card">
+        <div class="component">Container</div>
+        <div class="tech-name">Docker</div>
+        <div class="tech-ver">20.10+</div>
+      </div>
+      <div class="stack-card">
+        <div class="component">Orchestration</div>
+        <div class="tech-name">Docker Compose</div>
+        <div class="tech-ver">2.0+</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DJANGO APPS -->
+  <section class="section">
+    <div class="section-label">
+      <span>03 — Applications</span>
+      <span>Django App Structure</span>
+    </div>
+    <h2>Django App Modules</h2>
+    <table class="apps-table">
+      <thead>
+        <tr>
+          <th>App</th>
+          <th>Purpose</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="app-name">accounts</td><td class="app-purpose">Multi-platform account management (Amazon, Google, Meta, TikTok)</td></tr>
+        <tr><td class="app-name">strategies_app</td><td class="app-purpose">Campaign automation strategies and rules</td></tr>
+        <tr><td class="app-name">assistant_app</td><td class="app-purpose">AI-powered assistant features</td></tr>
+        <tr><td class="app-name">google_adwords_app</td><td class="app-purpose">Google Ads API integration</td></tr>
+        <tr><td class="app-name">meta</td><td class="app-purpose">Facebook / Instagram Ads integration</td></tr>
+        <tr><td class="app-name">tiktok</td><td class="app-purpose">TikTok Ads API integration</td></tr>
+        <tr><td class="app-name">google_sheets</td><td class="app-purpose">Google Sheets data import / export</td></tr>
+        <tr><td class="app-name">users</td><td class="app-purpose">User authentication, workspaces, team management</td></tr>
+        <tr><td class="app-name">emails</td><td class="app-purpose">Email sending and notification templates</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ENV CONFIG -->
+  <section class="section" id="env">
+    <div class="section-label">
+      <span>04 — Configuration</span>
+      <span>Environment Variables</span>
+    </div>
+    <h2>Environment Variables</h2>
+
+    <div class="env-group">
+      <div class="env-group-title">Core Settings</div>
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></span>
+          .env
+        </div>
+        <pre><span class="c"># Application</span>
+<span class="k">SECRET_KEY</span>=<span class="v">your-secret-key-here</span>
+<span class="k">DEBUG</span>=<span class="v">False</span>  <span class="c"># ALWAYS False in production</span>
+<span class="k">ALLOWED_HOSTS</span>=<span class="v">yourdomain.com,api.yourdomain.com</span>
+<span class="k">FRONTEND_URL</span>=<span class="v">https://yourdomain.com</span>
+<span class="k">WORKFLOW_DISPATCH_WEBHOOK_SECRET</span>=<span class="v">your-webhook-secret</span></pre>
+      </div>
+    </div>
+
+    <div class="env-group">
+      <div class="env-group-title">Database</div>
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></span>
+          .env
+        </div>
+        <pre><span class="k">DB_HOST</span>=<span class="v">postgres.yourcluster.us-east-1.rds.amazonaws.com</span>
+<span class="k">DB_PORT</span>=<span class="v">5432</span>
+<span class="k">DB_NAME</span>=<span class="v">stellar_prod</span>
+<span class="k">DB_USER</span>=<span class="v">postgres</span>
+<span class="k">DB_PASSWORD</span>=<span class="v">strong-password-here</span></pre>
+      </div>
+    </div>
+
+    <div class="env-group">
+      <div class="env-group-title">Message Queue — AWS SQS</div>
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></span>
+          .env
+        </div>
+        <pre><span class="k">CELERY_BROKER_URL</span>=<span class="v">sqs://</span>
+<span class="k">AWS_ACCESS_KEY_ID</span>=<span class="v">your-aws-key</span>
+<span class="k">AWS_SECRET_ACCESS_KEY</span>=<span class="v">your-aws-secret</span>
+<span class="k">AWS_SQS_PREFIX</span>=<span class="v">stellar-prod-</span>
+<span class="k">AWS_DEFAULT_REGION</span>=<span class="v">us-east-1</span>
+<span class="k">CELERY_RESULT_BACKEND</span>=<span class="v">db+postgresql://user:pass@host/dbname</span></pre>
+      </div>
+    </div>
+
+    <div class="env-group">
+      <div class="env-group-title">Message Queue — Redis (alternative)</div>
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></span>
+          .env
+        </div>
+        <pre><span class="k">CELERY_BROKER_URL</span>=<span class="v">redis://redis:6379/0</span>
+<span class="k">CELERY_RESULT_BACKEND</span>=<span class="v">redis://redis:6379/1</span>
+<span class="k">REDIS_HOST</span>=<span class="v">redis</span>
+<span class="k">REDIS_PORT</span>=<span class="v">6379</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- DEPLOY OPTIONS -->
+  <section class="section" id="deploy">
+    <div class="section-label">
+      <span>05 — Deployment</span>
+      <span>Infrastructure Options</span>
+    </div>
+    <h2>Deployment Options</h2>
+    <div class="deploy-grid">
+      <div class="deploy-card">
+        <div class="option-num">Option 01</div>
+        <div class="option-title">Docker Compose</div>
+        <div class="option-desc">All-in-one single-server setup. Good for development and small-scale deployments.</div>
+        <div class="pros-cons">
+          <div class="item pro"><span class="icon">+</span><span>Simple setup & management</span></div>
+          <div class="item pro"><span class="icon">+</span><span>All services in one place</span></div>
+          <div class="item con"><span class="icon">−</span><span>Single point of failure</span></div>
+          <div class="item con"><span class="icon">−</span><span>Limited horizontal scaling</span></div>
+        </div>
+      </div>
+      <div class="deploy-card featured">
+        <div class="rec-badge">Recommended</div>
+        <div class="option-num">Option 02</div>
+        <div class="option-title">Kubernetes</div>
+        <div class="option-desc">EKS, GKE, or self-managed. Stateless Django pods, auto-scaling Celery workers.</div>
+        <div class="pros-cons">
+          <div class="item pro"><span class="icon">+</span><span>Horizontal auto-scaling</span></div>
+          <div class="item pro"><span class="icon">+</span><span>High availability</span></div>
+          <div class="item pro"><span class="icon">+</span><span>Production-grade resilience</span></div>
+          <div class="item con"><span class="icon">−</span><span>Higher operational complexity</span></div>
+        </div>
+      </div>
+      <div class="deploy-card">
+        <div class="option-num">Option 03</div>
+        <div class="option-title">AWS ECS + RDS</div>
+        <div class="option-desc">ECS Fargate services behind ELB. Managed RDS, SQS, S3 for a fully AWS-native stack.</div>
+        <div class="pros-cons">
+          <div class="item pro"><span class="icon">+</span><span>Fully managed AWS services</span></div>
+          <div class="item pro"><span class="icon">+</span><span>Auto-scaling built in</span></div>
+          <div class="item con"><span class="icon">−</span><span>AWS vendor lock-in</span></div>
+          <div class="item con"><span class="icon">−</span><span>Cost can escalate at scale</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STARTUP COMMANDS -->
+  <section class="section">
+    <div class="section-label">
+      <span>06 — Startup</span>
+      <span>Application Bootstrap</span>
+    </div>
+    <h2>Application Startup</h2>
+    <div class="startup-steps">
+      <div class="startup-step">
+        <div class="step-num-col">01</div>
+        <div class="step-content-col">
+          <div class="step-title">Run database migrations</div>
+          <code>python manage.py migrate</code>
+        </div>
+      </div>
+      <div class="startup-step">
+        <div class="step-num-col">02</div>
+        <div class="step-content-col">
+          <div class="step-title">Collect static files</div>
+          <code>python manage.py collectstatic --noinput</code>
+        </div>
+      </div>
+      <div class="startup-step">
+        <div class="step-num-col">03</div>
+        <div class="step-content-col">
+          <div class="step-title">Create superuser (once)</div>
+          <code>python manage.py createsuperuser</code>
+        </div>
+      </div>
+      <div class="startup-step">
+        <div class="step-num-col">04</div>
+        <div class="step-content-col">
+          <div class="step-title">Start Django via Gunicorn</div>
+          <code>gunicorn stellar_backend.wsgi:application --bind 0.0.0.0:8000 --workers 4</code>
+        </div>
+      </div>
+      <div class="startup-step">
+        <div class="step-num-col">05</div>
+        <div class="step-content-col">
+          <div class="step-title">Start Celery worker(s)</div>
+          <code>celery -A stellar_backend worker -Q stellar-automation-workflow,stellar-strategy-scheduler --loglevel=info</code>
+        </div>
+      </div>
+      <div class="startup-step">
+        <div class="step-num-col">06</div>
+        <div class="step-content-col">
+          <div class="step-title">Start Celery Beat — ONE instance only!</div>
+          <code>celery -A stellar_backend beat --loglevel=info</code>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRE-DEPLOY CHECKLIST -->
+  <section class="section" id="checklist">
+    <div class="section-label">
+      <span>07 — Checklist</span>
+      <span>Pre-Deployment</span>
+    </div>
+    <h2>Pre-Deployment Checklist</h2>
+    <div class="checklist" id="checklistEl">
+      <div class="check-item" onclick="toggleCheck(this)">
+        <div class="check-box"></div>
+        <div class="check-text">Generate strong <code style="font-family:monospace;font-size:12px;color:var(--accent)">SECRET_KEY</code></div>
+      </div>
+      <div class="check-item" onclick="toggleCheck(this)">
+        <div class="check-box"></div>
+        <div class="check-text">Set <code style="font-family:monospace;font-size:12px;color:var(--accent)">DEBUG=False</code> in production</div>
+      </div>
+      <div class="check-item" onclick="toggleCheck(this)">
+        <div class="check-box"></div>
+        <div class="check-text">Configure <code style="font-family:monospace;font-size:12px;color:var(--accent)">ALLOWED_HOSTS</code> — not <code style="font-family:monospace;font-size:12px;color:var(--accent3)">['*']</code></div>
+      </div>
+      <div class="check-item" onclick="toggleCheck(this)">
+        <div class="check-box"></div>
+        <div class="check-text">Set up PostgreSQL database with automated backups</div>
+      </div>
+      <div class="check-item" onclick="toggleCheck(this)">
+        <div class="check-box"></div>
+        <div class="check-text">Choose and configure message broker (SQS or Redis)</div>
+      </div>
+      <div class="check-item" onclick="toggleCheck(this)">
+        <div class="check-box"></div>
+        <div class="check-text">Create <code style="font-family:monospace;font-size:12px;color:var(--accent)">.env</code> file with all required variables</div>
+      </div>
+      <div class="check-item" onclick="toggleCheck(this)">
+        <div class="check-box"></div>
+        <div class="check-text">Test database migrations: <code style="font-family:monospace;font-size:12px;color:var(--accent)">python manage.py migrate</code></div>
+      </div>
+      <div class="check-item" onclick="toggleCheck(this)">
+        <div class="check-box"></div>
+        <div class="check-text">Configure all OAuth credentials (Amazon, Google, Meta, TikTok)</div>
+      </div>
+      <div class="check-item" onclick="toggleCheck(this)">
+        <div class="check-box"></div>
+        <div class="check-text">Enable SSL/TLS on database connection</div>
+      </div>
+      <div class="check-item" onclick="toggleCheck(this)">
+        <div class="check-box"></div>
+        <div class="check-text">Verify health endpoint responds: <code style="font-family:monospace;font-size:12px;color:var(--accent)">GET /health</code></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCALING -->
+  <section class="section">
+    <div class="section-label">
+      <span>08 — Scaling</span>
+      <span>Growth Roadmap</span>
+    </div>
+    <h2>Scaling Strategy</h2>
+    <div class="phases">
+      <div class="phase">
+        <div class="phase-dot"></div>
+        <div class="phase-label">Phase 1 · MVP</div>
+        <h3>Single Server</h3>
+        <ul>
+          <li>Django + Celery on one VM</li>
+          <li>PostgreSQL on separate VM</li>
+          <li>Redis or SQS for queues</li>
+          <li>Minimal ops overhead</li>
+        </ul>
+      </div>
+      <div class="phase">
+        <div class="phase-dot"></div>
+        <div class="phase-label">Phase 2 · Growth</div>
+        <h3>Load Balanced</h3>
+        <ul>
+          <li>Load balancer + multi API instances</li>
+          <li>Dedicated Celery worker VMs</li>
+          <li>Managed RDS PostgreSQL</li>
+          <li>Monitoring & alerting</li>
+        </ul>
+      </div>
+      <div class="phase">
+        <div class="phase-dot"></div>
+        <div class="phase-label">Phase 3 · Enterprise</div>
+        <h3>Kubernetes</h3>
+        <ul>
+          <li>K8s cluster with auto-scaling</li>
+          <li>Separate node pools per service</li>
+          <li>Database read replicas</li>
+          <li>Distributed caching layer</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- MONITORING -->
+  <section class="section">
+    <div class="section-label">
+      <span>09 — Monitoring</span>
+      <span>Observability Stack</span>
+    </div>
+    <h2>Monitoring & Observability</h2>
+    <div class="monitor-grid">
+      <div class="monitor-card">
+        <div class="tool-category">APM</div>
+        <div class="tools">
+          <div class="tool-item">New Relic</div>
+          <div class="tool-item">DataDog</div>
+          <div class="tool-item">Sentry</div>
+        </div>
+      </div>
+      <div class="monitor-card">
+        <div class="tool-category">Logs</div>
+        <div class="tools">
+          <div class="tool-item">AWS CloudWatch</div>
+          <div class="tool-item">ELK Stack</div>
+          <div class="tool-item">Grafana Loki</div>
+        </div>
+      </div>
+      <div class="monitor-card">
+        <div class="tool-category">Metrics</div>
+        <div class="tools">
+          <div class="tool-item">Prometheus</div>
+          <div class="tool-item">Grafana</div>
+        </div>
+      </div>
+      <div class="monitor-card">
+        <div class="tool-category">Alerting</div>
+        <div class="tools">
+          <div class="tool-item">PagerDuty</div>
+          <div class="tool-item">Opsgenie</div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top: 20px;">
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></span>
+          Key Metrics
+        </div>
+        <pre><span class="c"># Django</span>
+<span class="k">Request latency</span>      <span class="v">p50, p95, p99</span>
+<span class="k">Error rate</span>           <span class="v">4xx / 5xx breakdown</span>
+
+<span class="c"># Celery</span>
+<span class="k">Queue depth</span>          <span class="v">per queue</span>
+<span class="k">Worker utilization</span>   <span class="v">CPU + memory</span>
+
+<span class="c"># Database</span>
+<span class="k">Connection pool</span>      <span class="v">active / idle connections</span>
+<span class="k">Slow queries</span>         <span class="v">> 100ms</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECURITY -->
+  <section class="section" id="security">
+    <div class="section-label">
+      <span>10 — Security</span>
+      <span>Best Practices</span>
+    </div>
+    <h2>Security Best Practices</h2>
+    <div class="security-list">
+      <div class="sec-item">
+        <div class="sec-num">01</div>
+        <div class="sec-content">
+          <h3>Secrets Management</h3>
+          <p>Use AWS Secrets Manager or HashiCorp Vault. Never commit <code style="font-family:monospace;font-size:12px;color:var(--accent)">.env</code> to git. Rotate API keys regularly. JWT access tokens expire in 5 minutes by default.</p>
+        </div>
+      </div>
+      <div class="sec-item">
+        <div class="sec-num">02</div>
+        <div class="sec-content">
+          <h3>Database Hardening</h3>
+          <p>Enable SSL/TLS connections. Restrict database access via VPC security groups. Enable automated daily backups with point-in-time recovery.</p>
+        </div>
+      </div>
+      <div class="sec-item">
+        <div class="sec-num">03</div>
+        <div class="sec-content">
+          <h3>API Security</h3>
+          <p>Enable CORS for trusted domains only. Implement rate limiting. Use short-lived JWT access tokens. Validate all OAuth callback URLs.</p>
+        </div>
+      </div>
+      <div class="sec-item">
+        <div class="sec-num">04</div>
+        <div class="sec-content">
+          <h3>Infrastructure</h3>
+          <p>Use VPN for admin access. Enable WAF on load balancer. Apply regular security patches. Restrict SSH access via security groups.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="footer-logo">Stellar Backend</div>
+  <div class="footer-meta">DevOps Deployment Guide &nbsp;·&nbsp; Last Updated 2026-05-12 &nbsp;·&nbsp; Django 4.2.7 · Python 3.11</div>
+</footer>
+
+<script>
+  function toggleCheck(el) {
+    el.classList.toggle('done');
+  }
+
+  document.querySelectorAll('nav a').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      const target = document.querySelector(a.getAttribute('href'));
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+</script>
+</body>
+</html>
